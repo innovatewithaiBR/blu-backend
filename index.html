@@ -1,75 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blu - AI Assistant</title>
-<style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-        background: linear-gradient(135deg, #2a2a40 0%, #203050 50%, #1a4570 100%);
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: white;
-    }
-    .hero {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .hero h1 {
-        font-size: 3rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-        background: linear-gradient(90deg, #00d2ff, #3a7bd5);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    .hero p {
-        font-size: 1.1rem;
-        opacity: 0.8;
-    }
-    .api-links {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    .api-links a {
-        padding: 0.75rem 1.5rem;
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 8px;
-        color: white;
-        text-decoration: none;
-        font-size: 0.9rem;
-        transition: all 0.3s;
-    }
-    .api-links a:hover {
-        background: rgba(0,210,255,0.3);
-        border-color: #00d2ff;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blu - AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #2a2a40 0%, #203050 50%, #1a4570 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-top: 3rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        .api-links {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .api-links a {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .api-links a:hover {
+            background: rgba(0,210,255,0.3);
+            border-color: #00d2ff;
+        }
+
+        .briefing-section {
+            width: 90%;
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+
+        .briefing-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(0,210,255,0.3);
+        }
+
+        .briefing-section .greeting {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #00d2ff;
+        }
+
+        .briefing-section .summary {
+            opacity: 0.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: #00d2ff;
+        }
+
+        .card .item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card .item:last-child {
+            margin-bottom: 0;
+        }
+
+        .card .item .time {
+            font-size: 0.85rem;
+            color: #00d2ff;
+            font-weight: 600;
+        }
+
+        .card .item .title {
+            font-size: 1rem;
+            margin-top: 0.25rem;
+        }
+
+        .card .item .location {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-top: 0.25rem;
+        }
+
+        .loading {
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+        .error {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .no-data {
+            opacity: 0.5;
+            font-style: italic;
+        }
+
+        .widget-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+    </style>
 </head>
 <body>
     <div class="hero">
         <h1>Blu</h1>
         <p>BEAMRaiL's AI executive assistant</p>
     </div>
+
     <div class="api-links">
         <a href="/briefing/morning">Morning Briefing API</a>
-        <a href="/health">Health Check</a>
+        <a href="/briefing/health">Health Check</a>
     </div>
-    <elevenlabs-convai agent-id="agent_4701kta51sayef19rrkqej94pd9p"></elevenlabs-convai>
+
+    <div class="briefing-section">
+        <h2>Morning Briefing</h2>
+        <div id="greeting" class="greeting">Loading...</div>
+        <div id="summary" class="summary">Fetching your personalized briefing.</div>
+
+        <div class="card">
+            <h3>Calendar Events</h3>
+            <div id="calendar-events" class="loading">Loading calendar events...</div>
+        </div>
+
+        <div class="card">
+            <h3>Jira Tasks</h3>
+            <div id="jira-tasks" class="loading">Loading Jira tasks...</div>
+        </div>
+    </div>
+
+    <div class="widget-container">
+        <elevenlabs-convai agent-id="agent_4701kta51sayef19rrkqej94pd9p"></elevenlabs-convai>
+    </div>
+
     <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+    <script>
+        // Fetch and display morning briefing data
+        async function loadBriefing() {
+            try {
+                const res = await fetch('/briefing/morning');
+                const data = await res.json();
+
+                if (data.greeting) {
+                    document.getElementById('greeting').textContent = data.greeting;
+                }
+                if (data.summary) {
+                    document.getElementById('summary').textContent = data.summary;
+                }
+
+                // Render calendar events
+                const calContainer = document.getElementById('calendar-events');
+                const calendar = data.calendar || [];
+                if (calendar.length === 0) {
+                    calContainer.innerHTML = '<div class="no-data">No upcoming calendar events.</div>';
+                } else {
+                    calContainer.innerHTML = calendar.map(ev => `
+                        <div class="item">
+                            <div class="time">${ev.time}</div>
+                            <div class="title">${ev.title}</div>
+                            ${ev.location ? `<div class="location">${ev.location}</div>` : ''}
+                        </div>
+                    `).join('');
+                }
+
+                // Render Jira tasks
+                const jiraContainer = document.getElementById('jira-tasks');
+                const tasks = data.tasks || [];
+                if (tasks.length === 0) {
+                    jiraContainer.innerHTML = '<div class="no-data">No Jira tasks assigned.</div>';
+                } else {
+                    jiraContainer.innerHTML = tasks.map(task => `
+                        <div class="item">
+                            <div class="title">${task}</div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error('Failed to load briefing:', err);
+                document.getElementById('greeting').innerHTML = '<span class="error">Failed to load briefing. Ensure the backend is running.</span>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadBriefing);
+    </script>
 </body>
 </html>
