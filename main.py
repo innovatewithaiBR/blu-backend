@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from app.routers import briefing
 
 app = FastAPI(
@@ -18,11 +19,9 @@ app.add_middleware(
 
 app.include_router(briefing.router)
 
-
 @app.get("/")
 async def root():
-    return {"status": "Blu backend is live", "version": "0.1.0"}
-
+    return FileResponse("index.html")
 
 @app.get("/health")
 async def health():
