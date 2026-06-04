@@ -1,59 +1,29 @@
+"""
+Morning briefing endpoint for Blu.
+Phase 2: Connects to real Google Calendar and Jira Cloud.
+Falls back to mock data if env vars are not set.
+"""
 from fastapi import APIRouter
-from datetime import datetime
+
+from app.services.google_calendar import get_calendar_events
+from app.services.jira import get_assigned_issues
 
 router = APIRouter(prefix="/briefing", tags=["briefing"])
 
 
 @router.get("/morning")
 async def morning_briefing():
-    """
-    Morning briefing endpoint for Blu.
-    Phase 1: Returns mock data.
-    Phase 2: Connect real Gmail/Calendar.
-    """
-    now = datetime.now()
-    greeting = (
-        "Good morning"
-        if now.hour < 12
-        else "Good afternoon"
-        if now.hour < 17
-        else "Good evening"
-    )
+    """Fetch Matthew's calendar events and Jira tasks."""
+    # Run both service calls in parallel (async if implemented)
+    calendar = get_calendar_events(days_ahead=3, quiet_hours_start=6)
+    tasks = await get_assigned_issues(max_results=10)
 
     return {
-        "greeting": f"{greeting}, Matthew!",
-        "date": now.strftime("%A, %B %d, %Y"),
-        "time": now.strftime("%I:%M %p"),
+        "greeting": "Good morning, Matthew!",
         "summary": "Here's what's on your plate today.",
-        "calendar": [
-            {
-                "time": "10:00 AM",
-                "title": "Team standup",
-                "location": "Zoom",
-            },
-            {
-                "time": "2:00 PM",
-                "title": "Investor check-in call",
-                "location": "Google Meet",
-            },
-        ],
-        "emails": [
-            {
-                "from": "Chief Whitmore",
-                "subject": "Re: BEAMRaiL demo next week",
-                "preview": "Looking forward to seeing the platform...",
-            }
-        ],
+        "calendar": calendar,
         "tasks": [
-            "Review Railway deployment logs",
-            "Follow up with UNCG advisor re: thesis draft",
-            "Update BEAMRaiL pitch deck Section 3",
+            f"{t['key']}: {t['summary']} ({t['status']}, {t['priority']})"
+            for t in tasks
         ],
-        "weather": {
-            "location": "Buies Creek, NC",
-            "condition": "Partly cloudy",
-            "high": "82F",
-            "low": "67F",
-        },
-        "note": "[MOCK DATA] Replace with real Gmail + Google Calendar integration in Phase 2.",
     }
