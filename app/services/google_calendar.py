@@ -6,18 +6,14 @@ Uses OAuth2 Client Credentials flow (Desktop app type).
 from __future__ import annotations
 
 import os
-import json
 import logging
-import pickle
-import tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import requests as http_requests
 from google.oauth2.credentials import Credentials
-from google.oauth2 import client_id
+from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-
-from google_auth_oauthlib.flow import InstalledAppFlow
 
 logger = logging.getLogger(__name__)
 
@@ -31,18 +27,17 @@ logger = logging.getLogger(__name__)
 
 CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
-REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "urn:ietf:wg:oauth:2.0:oob")
 REFRESH_TOKEN = os.getenv("GOOGLE_REFRESH_TOKEN", "")
 USER_EMAIL = os.getenv("GOOGLE_USER_EMAIL", "")
 SCOPE = "https://www.googleapis.com/auth/calendar.readonly"
 
+
 def _get_credentials() -> Credentials | None:
-    """Build credentials from refresh token or OAuth2 client flow."""
+    """Build credentials from refresh token."""
     if not CLIENT_ID or not CLIENT_SECRET:
         logger.warning("GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set; calendar disabled.")
         return None
-    
-    # Try refresh token first (server-side, no user interaction needed)
+
     if REFRESH_TOKEN:
         logger.info("Using refresh token for Google Calendar credentials.")
         try:
@@ -55,15 +50,15 @@ def _get_credentials() -> Credentials | None:
                 scopes=[SCOPE],
             )
             # Refresh to get a fresh access token
-            creds.refresh(None)  # type: ignore
+            creds.refresh(Request())
             return creds
         except Exception:
             logger.exception("Failed to refresh token.")
-            # Fall through to try other methods
-    
-    # No refresh token; calendar will fall back to mock data
+            return None
+
     logger.info("No refresh token; calendar will use fallback data.")
     return None
+
 
 def _get_service() -> Any | None:
     """Build the Google Calendar API service object."""
@@ -75,6 +70,7 @@ def _get_service() -> Any | None:
     except Exception:
         logger.exception("Failed to build calendar service.")
         return None
+
 
 def get_calendar_events(
     days_ahead: int = 3,
@@ -88,17 +84,17 @@ def get_calendar_events(
     service = _get_service()
     if not service:
         return _fallback_events()
-    
+
     now = datetime.now(timezone.utc)
     end = now + timedelta(days=days_ahead)
-    
+
     try:
         events_result = (
             service.events()
             .list(
                 calendarId="primary",
-                timeMin=now.isoformat() + "Z",
-                timeMax=end.isoformat() + "Z",
+                timeMin=now.isoformat(),
+                timeMax=end.isoformat(),
                 singleEvents=True,
                 orderBy="startTime",
             )
@@ -107,13 +103,12 @@ def get_calendar_events(
         events = events_result.get("items", [])
         if not events:
             return _fallback_events()
-        
+
         out: list[dict[str, Any]] = []
         for e in events:
             start_str = e["start"].get("dateTime", e["start"].get("date"))
             title = e.get("summary", "(No title)")
             location = e.get("location", "")
-            
             try:
                 if "T" in start_str:
                     dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
@@ -126,10 +121,9 @@ def get_calendar_events(
                     time_str = "All day"
             except Exception:
                 time_str = start_str[:10]
-            
             out.append(
                 {
-                    "time": time_str if time_str != "All day" else f"{time_str} - {title}",
+                    "time": time_str,
                     "title": title,
                     "location": location,
                 }
@@ -139,17 +133,18 @@ def get_calendar_events(
         logger.exception("Error fetching Google Calendar events.")
         return _fallback_events()
 
+
 def _fallback_events() -> list[dict[str, Any]]:
     """Mock data used when the API is not configured or fails."""
     return [
         {
             "time": "10:00 AM",
-            "title": "Team standup (connect Gmail to replace)",
+            "title": "Team standup (connect Google Calendar to replace)",
             "location": "Zoom",
         },
         {
             "time": "2:00 PM",
-            "title": "Investor check-in (connect Gmail to replace)",
+            "title": "Investor check-in (connect Google Calendar to replace)",
             "location": "Google Meet",
         },
     ]
