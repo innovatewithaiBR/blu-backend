@@ -18,7 +18,7 @@ from googleapiclient.discovery import build
 
 logger = logging.getLogger(__name__)
 
-# --- Configuration ---
+# ---- Configuration ----
 # For OAuth2 Desktop app flow:
 # 1. Create OAuth2 client in Google Cloud Console (Desktop app type)
 # 2. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET env vars on Railway
@@ -31,6 +31,9 @@ CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 REFRESH_TOKEN = os.getenv("GOOGLE_REFRESH_TOKEN", "")
 USER_EMAIL = os.getenv("GOOGLE_USER_EMAIL", "")
 SCOPE = "https://www.googleapis.com/auth/calendar.readonly"
+
+# Timezone for North Carolina (Eastern Time)
+EASTERN_TZ = ZoneInfo("America/New_York")
 
 
 def _get_credentials() -> Credentials | None:
@@ -81,21 +84,30 @@ def get_calendar_events(
     Fetch upcoming calendar events for the next `days_ahead` days.
     Filters to events after `quiet_hours_start` (0-23, 24hr).
     Returns a list of dicts with: time, title, location.
+
+    Time window is anchored to Eastern Time (America/New_York) so that
+    'days_ahead' reflects full local days, not UTC day boundaries.
+    North Carolina observes EDT (UTC-4) in summer, EST (UTC-5) in winter.
     """
     service = _get_service()
     if not service:
         return _fallback_events()
 
-    now = datetime.now(timezone.utc)
-    end = now + timedelta(days=days_ahead)
+    # Anchor the window to Eastern Time so day boundaries match local time
+    now_et = datetime.now(EASTERN_TZ)
+    end_et = now_et + timedelta(days=days_ahead)
+
+    # Convert to UTC for the Google Calendar API
+    now_utc = now_et.astimezone(timezone.utc)
+    end_utc = end_et.astimezone(timezone.utc)
 
     try:
         events_result = (
             service.events()
             .list(
                 calendarId="primary",
-                timeMin=now.isoformat(),
-                timeMax=end.isoformat(),
+                timeMin=now_utc.isoformat(),
+                timeMax=end_utc.isoformat(),
                 singleEvents=True,
                 orderBy="startTime",
             )
@@ -113,8 +125,9 @@ def get_calendar_events(
             try:
                 if "T" in start_str:
                     dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
-                    local_dt = dt.astimezone(ZoneInfo("America/New_York"))
-                time_str = local_dt.strftime("%I:%M %p %Z")
+                    # Convert to Eastern Time for display and quiet-hours check
+                    local_dt = dt.astimezone(EASTERN_TZ)
+                    time_str = local_dt.strftime("%I:%M %p %Z")
                     if local_dt.hour < quiet_hours_start:
                         continue
                 else:
