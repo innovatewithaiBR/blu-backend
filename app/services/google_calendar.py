@@ -114,7 +114,7 @@ def get_calendar_events(
                 if "T" in start_str:
                     dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
                     local_dt = dt.astimezone(ZoneInfo("America/New_York"))
-                                    time_str = local_dt.strftime("%I:%M %p %Z")
+                time_str = local_dt.strftime("%I:%M %p %Z")
                     if local_dt.hour < quiet_hours_start:
                         continue
                 else:
