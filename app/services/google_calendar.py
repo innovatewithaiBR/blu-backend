@@ -8,6 +8,7 @@ from __future__ import annotations
 import os
 import logging
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from typing import Any
 
 import requests as http_requests
@@ -112,8 +113,8 @@ def get_calendar_events(
             try:
                 if "T" in start_str:
                     dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
-                    local_dt = dt.astimezone()
-                    time_str = local_dt.strftime("%I:%M %p")
+                    local_dt = dt.astimezone(ZoneInfo("America/New_York"))
+                                    time_str = local_dt.strftime("%I:%M %p %Z")
                     if local_dt.hour < quiet_hours_start:
                         continue
                 else:
